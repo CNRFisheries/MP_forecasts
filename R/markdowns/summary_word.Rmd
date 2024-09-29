@@ -1,0 +1,217 @@
+---
+title: "Management Plan 2024 - example of biological analysis"
+output:
+  word_document: default
+bibliography: references.bib
+---
+
+This document is a draft of the biological analysis needed to model the effects of fishing effort reduction scenarios on stock quantities. The methodology is demonstrated on the Thyrrenian Sea and on stock assessments done with the a4a stock assessment model.
+
+To come: examples on other areas and application of forecasts to other stock assessment models (ss3 and spict).
+
+## Methodology
+
+Data (stock objects and reference points) are gathered from STECF EWG 23-09 [@stecf2023a]. All these stock assessments are based on models fitted on timeseries ending in 2021 and updated to 2022 based on deterministic catch projections.
+
+Forecast settings are:
+
+-   Forecasts start in 2023
+
+-   F status quo ($F_{sq}$) is defined as the $F_{bar}$ observed in the last year of assessment (2022)
+
+-   F weak ($F_{weak}$) is defined as $F_{bar}*Reduction_{weak}$, where $Reduction_{weak}$ is the lower $F_{01}/F_{sq}$ observed in the area.
+
+-   2023 and 2024 are intermediate year (F = $F_{sq}$ for each scenario)
+
+-   Scenarios are applied over the period 2025-2030
+
+Stock objects setting used in forecast period are:
+
+-   Biological quantities (rec, weigth, mat) used for forecast are the mean of most five recent years (2020-2022). Five year is preferred because 2022 was already set as the mean of 2019-2021 given the methodology applied by [@stecf2023a].
+
+-   Stock-Recruitment relation used is geomean
+
+-   Stochastic forecasts are implemented by adding residuals to the expected recruitment (age 1)
+
+-   Recruitment residuals \~ Lognormal($\mu$, $\sigma^2$), where $\mu$ =0 and $\sigma^2$ is the CV of the observed recruitment (entire time series)
+
+Scenarios are:
+
+-   F status quo ($F_{sq}$ fixed up to 2030)
+-   Fmsy transition: $F_y = a_y* F_{sq} + (1-a_y) * F_{01}$, where a is a vector of linear decrease
+-   F weak: $F_y = a_y* F_{sq} + (1-a_y) * F_{weak}$, where a is a vector of linear decrease. This scenario simulates the effect of implementing to all stocks the same % reduction needed to reach $F_{01}$ for the stock having the largest $F_{sq}/F_{01}$ in 2022
+-   Gradual reduction, 3% per year: $F_{y+1} = F_{y} * 0.97$
+-   Gradual reduction, 5% per year: $F_{y+1} = F_{y} * 0.95$
+
+\newpage
+
+```{r setup, include=FALSE}
+library(stringr)
+library(readxl)
+pander::panderOptions('table.split.table', Inf)   # Disable table splitting in Word
+pander::panderOptions('table.alignment.default', 'center')  # Center align columns by default
+
+stocks_info <- read_excel("C:/Users/e.armelloni/OneDrive/Lezioni/Lavoro/Altro/piano_gestione/data/stocks_info.xlsx")
+stocks_info=stocks_info[stocks_info$stock!='NEP_17_18',]
+main.dir="C:/Users/e.armelloni/OneDrive/Lezioni/Lavoro/Altro/piano_gestione/results/plots"
+plot.list=list.files(main.dir)
+
+# define some common information
+target.pics=c('_stk','_fwd','_fwd_stc')
+captions <- c("Stock trajectory from most recent stock assessment", 
+              "Deterministic forecast",
+              "Stochastic forecast")
+images.size=c(400,400,400)
+header_level <- "##"
+```
+
+# Tirreno
+
+```{r, include=T,warning=F, echo=FALSE, fig.width = 1,results = 'asis'}
+#knitr::include_graphics(file.path(main.dir,x.folder,j.images), dpi = 300)
+stock.tir=stocks_info[stocks_info$area=='Tirreno',]
+target=stock.tir$stock
+for(j in 1:length(target)){
+#for(j in 1:1){
+#cat('\n\\newpage\n')
+cat(sprintf('%s %s\n\n', header_level, target[j]))
+  #cat('some random introduction to this model')
+  #x.images=list.files(path = file.path(main.dir,x.folder), pattern='.png')
+  x.images= paste0(target[j],target.pics,'.png')
+  target.pics.vec=paste(target.pics, collapse = "|")
+  x.images=x.images[grep(target.pics.vec,x.images )]
+  cap.table=paste0(target[j], ": Forecast results by scenario in 2030")
+  for(i in 1:length(target.pics)){
+    j.target=target.pics[i]
+    j.images=x.images[grep(j.target, x.images)][1]
+    if(j.images%in%plot.list==F){next}
+    filename <- file.path(main.dir,j.images)
+    file.caption=paste(target[j], captions[i])
+    cat(sprintf('![%s](%s){width=%s}\n\n', file.caption, filename, images.size[i]))
+  }
+  # table
+  x.table=read.csv(file.path(main.dir,'..','forecasts', paste0(target[j],'_summary.csv')))
+  if(j==6){
+  stf.kab=x.table[x.table$year==2030,c('scenario','tot_b',  'fbar','catch_tot', 'catch_ita_otb')]  
+  tab=kableExtra::kable(stf.kab,
+                    col.names = c('Scenario','Total biomass (tons)', 'Fbar', 'Total Catches (tons)',  'Catches from Italian trawlers (tons)'),
+                    caption = "Forecast results by scenario in 2030",
+                     align = "ccccc",
+                    row.names = F, format="markdown")%>%
+  kableExtra::kable_styling(full_width = FALSE, position = "center")
+  }else{
+  stf.kab=x.table[x.table$year==2030,c('scenario','ssb',  'fbar','catch_tot', 'catch_ita_otb')]  
+  tab=kableExtra::kable(stf.kab,
+                    col.names = c('Scenario','SSB (tons)', 'Fbar', 'Total Catches (tons)',  'Catches from Italian trawlers (tons)'),
+                    caption = "Forecast results by scenario in 2030",
+                     align = "ccccc",
+                    row.names = F, format="markdown")%>%
+  kableExtra::kable_styling(full_width = FALSE, position = "center")
+  }
+  
+  print(tab)
+ #tab=pander::pander(stf.kab,
+ #                 caption = "Forecast results by scenario in 2030", split.table = Inf)
+ #print(tab)
+}
+
+```
+
+\newpage
+
+# Adriatico
+
+```{r, include=T,warning=F, echo=FALSE, fig.width = 1,results = 'asis'}
+#knitr::include_graphics(file.path(main.dir,x.folder,j.images), dpi = 300)
+stock.adr=stocks_info[stocks_info$area=='Adriatico',]
+target=stock.adr$stock
+for(j in 1:length(target)){
+#for(j in 1:1){
+#cat('\n\\newpage\n')
+cat(sprintf('%s %s\n\n', header_level, target[j]))
+  #cat('some random introduction to this model')
+  #x.images=list.files(path = file.path(main.dir,x.folder), pattern='.png')
+  x.images= paste0(target[j],target.pics,'.png')
+  target.pics.vec=paste(target.pics, collapse = "|")
+  x.images=x.images[grep(target.pics.vec,x.images )]
+  cap.table=paste0(target[j], ": Forecast results by scenario in 2030")
+  for(i in 1:length(target.pics)){
+    j.target=target.pics[i]
+    j.images=x.images[grep(j.target, x.images)][1]
+    if(j.images%in%plot.list==F){next}
+    filename <- file.path(main.dir,j.images)
+    file.caption=paste(target[j], captions[i])
+    cat(sprintf('![%s](%s){width=%s}\n\n', file.caption, filename, images.size[i]))
+  }
+  # table
+  x.table=read.csv(file.path(main.dir,'..','forecasts', paste0(target[j],'_summary.csv')))
+if(j==4){
+  stf.kab=x.table[x.table$year==2030,c('scenario','tot_b',  'fbar','catch_tot', 'catch_ita_otb')]  
+  tab=kableExtra::kable(stf.kab,
+                    col.names = c('Scenario','Total biomass (tons)', 'Fbar', 'Total Catches (tons)',  'Catches from Italian trawlers (tons)'),
+                    caption = "Forecast results by scenario in 2030",
+                     align = "ccccc",
+                    row.names = F, format="markdown")%>%
+  kableExtra::kable_styling(full_width = FALSE, position = "center")
+  }else{
+  stf.kab=x.table[x.table$year==2030,c('scenario','ssb',  'fbar','catch_tot', 'catch_ita_otb')]  
+  tab=kableExtra::kable(stf.kab,
+                    col.names = c('Scenario','SSB (tons)', 'Fbar', 'Total Catches (tons)',  'Catches from Italian trawlers (tons)'),
+                    caption = "Forecast results by scenario in 2030",
+                     align = "ccccc",
+                    row.names = F, format="markdown")%>%
+  kableExtra::kable_styling(full_width = FALSE, position = "center")
+  }
+  print(tab)
+ #tab=pander::pander(stf.kab,
+ #                 caption = "Forecast results by scenario in 2030", split.table = Inf)
+ #print(tab)
+}
+
+```
+
+\newpage
+
+# Ionio
+
+```{r, include=T,warning=F, echo=FALSE, fig.width = 1,results = 'asis'}
+#knitr::include_graphics(file.path(main.dir,x.folder,j.images), dpi = 300)
+stock.ion=stocks_info[stocks_info$area=='Ionio',]
+target=stock.ion$stock
+for(j in 1:length(target)){
+#for(j in 1:1){
+#cat('\n\\newpage\n')
+cat(sprintf('%s %s\n\n', header_level, target[j]))
+  #cat('some random introduction to this model')
+  #x.images=list.files(path = file.path(main.dir,x.folder), pattern='.png')
+  x.images= paste0(target[j],target.pics,'.png')
+  target.pics.vec=paste(target.pics, collapse = "|")
+  x.images=x.images[grep(target.pics.vec,x.images )]
+   cap.table=paste0(target[j], ": Forecast results by scenario in 2030")
+  for(i in 1:length(target.pics)){
+    j.target=target.pics[i]
+    j.images=x.images[grep(j.target, x.images)][1]
+    if(length(j.images)==0){next}
+    filename <- file.path(main.dir,j.images)
+    file.caption=paste(target[j], captions[i])
+    cat(sprintf('![%s](%s){width=%s}\n\n', file.caption, filename, images.size[i]))
+  }
+  # table
+  x.table=read.csv(file.path(main.dir,'..','forecasts', paste0(target[j],'_summary.csv')))
+  stf.kab=x.table[x.table$year==2030,c('scenario','ssb',  'fbar','catch_tot', 'catch_ita_otb')]  
+  tab=kableExtra::kable(stf.kab,
+                    col.names = c('Scenario','SSB (tons)', 'Fbar', 'Total Catches (tons)',  'Catches from Italian trawlers (tons)'),
+                    caption = "Forecast results by scenario in 2030",
+                     align = "ccccc",
+                    row.names = F, format="markdown")%>%
+  kableExtra::kable_styling(full_width = FALSE, position = "center")
+  print(tab)
+ #tab=pander::pander(stf.kab,
+ #                 caption = "Forecast results by scenario in 2030", split.table = Inf)
+ #print(tab)
+}
+
+```
+
+
+# References
