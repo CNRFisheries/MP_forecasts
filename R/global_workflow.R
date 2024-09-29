@@ -31,8 +31,8 @@ stocks_info=stocks_info[stocks_info$stock!='NEP_17_18',]
 catch.data=readr::read_csv("C:/Users/e.armelloni/OneDrive/Lezioni/Lavoro/Stock Assessment/STECF/2022/data/catch.csv")
 
 # apply functions
-for(xx.stock in 1:length(stocks_info)){
-#for(xx.stock in 11:12){
+for(xx.stock in 1:nrow(stocks_info)){
+#for(xx.stock in 12:13){
   
   # get stock info ####
   x.stock=stocks_info[xx.stock,]
@@ -160,7 +160,7 @@ for(xx.stock in 1:length(stocks_info)){
   # saving
   write.csv(stf_results, paste0('results/forecasts/', x.stock$stock,'_summary.csv'), row.names = F)
   saveRDS(stf.store, paste0('results/forecasts/', x.stock$stock,'_fwd.rds'))
-  
+  rm(stf_results)
 }
 
 rmarkdown::render('R/markdowns/summary_word.Rmd')
