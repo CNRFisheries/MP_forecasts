@@ -23,11 +23,15 @@ Forecast settings are:
 
 -   2023 and 2024 are intermediate year (F = $F_{sq}$ for each scenario)
 
--   Scenarios are applied over the period 2025-2030
+-   F reductions are only applied to italian trawlers
+
+-   Scenarios are applied over the period 2025-2027
+
+-   2028-2030 are maintained equal to F values for 2027
 
 Stock objects setting used in forecast period are:
 
--   Biological quantities (rec, weigth, mat) used for forecast are the mean of most five recent years (2020-2022). Five year is preferred because 2022 was already set as the mean of 2019-2021 given the methodology applied by [@stecf2023a].
+-   Biological quantities (rec, weigth, mat) used for forecast are the mean of 2019-2021.
 
 -   Stock-Recruitment relation used is geomean
 
@@ -106,7 +110,8 @@ cat(sprintf('%s %s\n\n', header_level, target[j]))
                     caption = "Forecast results by scenario in 2030",
                      align = "ccccc",
                     row.names = F, format="markdown")%>%
-  kableExtra::kable_styling(full_width = FALSE, position = "center")
+  kableExtra::kable_styling(full_width = FALSE, position = "center",
+                            font_size = 7)
   }
   
   print(tab)
@@ -160,7 +165,8 @@ if(j==4){
                     caption = "Forecast results by scenario in 2030",
                      align = "ccccc",
                     row.names = F, format="markdown")%>%
-  kableExtra::kable_styling(full_width = FALSE, position = "center")
+  kableExtra::kable_styling(full_width = FALSE, position = "center",
+                            font_size = 7)
   }
   print(tab)
  #tab=pander::pander(stf.kab,
@@ -204,7 +210,8 @@ cat(sprintf('%s %s\n\n', header_level, target[j]))
                     caption = "Forecast results by scenario in 2030",
                      align = "ccccc",
                     row.names = F, format="markdown")%>%
-  kableExtra::kable_styling(full_width = FALSE, position = "center")
+  kableExtra::kable_styling(full_width = FALSE, position = "center",
+                            font_size = 7)
   print(tab)
  #tab=pander::pander(stf.kab,
  #                 caption = "Forecast results by scenario in 2030", split.table = Inf)
@@ -212,6 +219,5 @@ cat(sprintf('%s %s\n\n', header_level, target[j]))
 }
 
 ```
-
 
 # References
