@@ -33,10 +33,13 @@ get.timeseries=function(forecast.data, stock,scenario.vec){
     fleet.sel=fleet.def[fleet.def$fleet_name %in% fleet.selection,]
     
     ts.df=x.forecast[["timeseries"]]
-    ts.df=ts.df[ts.df$Yr%in%target.years,]
+    ts.df=ts.df[ts.df$Yr%in%target.years,]%>%
+      replace(is.na(.),0)
+    ts.df=ts.df%>%
+      dplyr::group_by(Yr,Era)%>%
+      dplyr::summarise_all(.,sum)
     
-    
-    catch.df=ts.df[,grep( 'retain',names(ts.df))]
+    catch.df=ts.df[,grep( 'dead',names(ts.df))]
     catch.df=catch.df[,grep( 'B',names(catch.df))]
     c.ts.all=as.numeric(apply(catch.df,1,sum))
     catch.df.ita=catch.df[,fleet.sel$id]
@@ -46,15 +49,16 @@ get.timeseries=function(forecast.data, stock,scenario.vec){
     rec.ts=ts.df[,'Recruit_0']
     
     f.df=x.forecast$exploitation
+    f.df=na.omit(f.df)
     f.df=f.df[f.df$Yr%in%target.years,]
     f.ts=f.df$annual_F
     
     i.res=data.frame(stock=stock,
                      scenario=scenarios[i],
                      year=2023:2030,
-                     rec=round(rec.ts),
+                     rec=round(rec.ts$Recruit_0),
                      rec_var=NA,
-                     ssb=round(ssb.ts),
+                     ssb=round(ssb.ts$SpawnBio),
                      fbar=round(f.ts, digits=3),
                      catch_tot=round(c.ts.all),
                      catch_ita_otb=round(c.ts.ita))
