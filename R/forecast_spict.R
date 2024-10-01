@@ -2,8 +2,14 @@
 ## This script is based on the standard spict functions
    library(spict)
   # set up for scenarios: status quo, Fmsy transition, -3%, -6%
+   if(x.name=='DPS'){stk=trim(stk, year=2000:2022)}
   no_stk_years <- dim(catch(stk))[2]
-  fbars <- fbar(stk)[,(no_stk_years - no_fbar_years + 1):no_stk_years]
+  #fbars <- fbar(stk)[,(no_stk_years - no_fbar_years + 1):no_stk_years]
+  fbars <-as.data.frame(exp(get.par('logF', stk.spict)))
+  fbars$year=as.numeric(rownames(fbars))
+  if(x.name=='DPS'){fbars=fbars[fbars$year==2022,]$est}
+  if(x.name=='MUT'){fbars=fbars[fbars$year==2021,]$est}
+  
   
   ## s quo
   f.s.quo=(fbar_status_quo <- mean(c(fbars)))
@@ -52,7 +58,7 @@
     biom.ts=biom.ts%>%
       dplyr::group_by(year)%>%
       dplyr::summarise(tot_b=round(mean(est)))
-    b
+    
     return(biom.ts)
   })
   B.ts=plyr::ldply(get.B.ts, .id='scenario')
