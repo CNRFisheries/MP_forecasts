@@ -48,6 +48,40 @@ Scenarios are:
 -   Gradual reduction, 5% per year: $F_{y+1} = F_{y} * 0.95$
 
 \newpage
+```{r, include=F,warning=F, echo=FALSE, fig.width = 1,results = 'asis'}
+library(tidyverse)
+ 
+```
+
+# Catch share
+
+The catch information was gathered by FDI catch data publicly available at https://stecf.ec.europa.eu/data-dissemination/fdi_en
+
+These data reports the annual landed weigth by fleet. We used averages of the period 2020-2022 to calculate the fleet share. Following table only reports those fleets having at least 1% of share. 
+
+```{r, include=T,warning=F, echo=FALSE, fig.width = 1,results = 'asis'}
+
+  # table
+  x.table=readr::read_csv("C:/Users/e.armelloni/OneDrive/Lezioni/Lavoro/Altro/piano_gestione/data/catch_share_FDI.csv")
+x.table$landings=round(x.table$landings)
+x.table=x.table[,c('species', 'area','country', 'gear','landings', 'prop')]
+  tab=kableExtra::kable(x.table,
+                    caption = "Catch share by fleet",
+                     align = "ccccc",
+                    row.names = F, format="markdown")%>%
+  kableExtra::kable_styling(full_width = FALSE, position = "center",
+                            font_size = 7)
+  
+  
+  print(tab)
+ #tab=pander::pander(stf.kab,
+ #                 caption = "Forecast results by scenario in 2030", split.table = Inf)
+ #print(tab)
+
+
+```
+
+\newpage
 
 ```{r setup, include=FALSE}
 library(stringr)
