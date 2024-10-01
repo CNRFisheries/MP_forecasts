@@ -28,7 +28,8 @@ nits <- 250 # iteration for stochastic recruitment in a4a
 stocks_info <- read_excel("data/stocks_info.xlsx")
 stocks_info=stocks_info[stocks_info$area!='Canale',]
 stocks_info=stocks_info[stocks_info$stock!='NEP_17_18',]
-catch.data=readr::read_csv("C:/Users/e.armelloni/OneDrive/Lezioni/Lavoro/Stock Assessment/STECF/2022/data/catch.csv")
+catch.data=readr::read_csv("data/catch_share_FDI.csv")
+catch.data$stock=paste(catch.data$species, catch.data$area, sep='_')
 
 # apply functions
 for(xx.stock in 1:nrow(stocks_info)){
@@ -56,18 +57,9 @@ for(xx.stock in 1:nrow(stocks_info)){
   i.flbrp=FLPar(Ftgt=i.ftarget, Btgt=NA, Bthr=x.stock$bpa, Blim=x.stock$bpa*0.5)
   
   ## get proportion of italian OTB: you can replace this. What you need at the end is just a number
-  i.catch=catch.data[catch.data$species==x.name,]
-  i.catch=i.catch[i.catch$area %in% x.area,]
-  i.catch=i.catch%>%
-    dplyr::filter(!is.na(gear))%>%
-    dplyr::filter(year%in%2020:2022, country!='JRC')%>%
-    dplyr::mutate(gear=ifelse(gear=='TBB','OTB',gear))%>%
-    dplyr::group_by(country, gear)%>%
-    dplyr::summarise(landings=sum(landings))%>%
-    dplyr::ungroup()%>%
-    dplyr::mutate(prop=landings/sum(landings))
-  catch.prop=i.catch[i.catch$country=='ITA' & i.catch$gear=='OTB',][1,]$prop # this is one single number < 1
-  
+  i.catch=catch.data[catch.data$stock==x.stock$stock,]
+  i.catch=i.catch[i.catch$country=='Italy' & i.catch$gear=='OTB',]
+  catch.prop=i.catch$prop # this is one single number < 1
   
   # get data
   if(x.model=='a4a'){
