@@ -1,14 +1,14 @@
 ## this set of functions creates and applies forecasts scenarios on spict objects. Please be aware that some quantities and values needed to use this script are loaded within the main workflow script.
 ## This script is based on the standard spict functions
-   library(spict)
+  library(spict)
   # set up for scenarios: status quo, Fmsy transition, -3%, -6%
-   if(x.name=='DPS'){stk=trim(stk, year=2000:2022)}
+  if(x.name=='DPS'){stk=trim(stk, year=2000:2022)}
   no_stk_years <- dim(catch(stk))[2]
   #fbars <- fbar(stk)[,(no_stk_years - no_fbar_years + 1):no_stk_years]
   fbars <-as.data.frame(exp(get.par('logF', stk.spict)))
   fbars$year=as.numeric(rownames(fbars))
-  if(x.name=='DPS'){fbars=fbars[fbars$year==2022,]$est}
-  if(x.name=='MUT'){fbars=fbars[fbars$year==2021,]$est}
+  if(x.name=='DPS'){fbars=fbars[fbars$year==2022.75,]$est}
+  if(x.name=='MUT'){fbars=fbars[fbars$year==2021.75,]$est}
   
   
   ## s quo
@@ -41,9 +41,9 @@
   sman = add.man.scenario(sman, "Annual 5%", ffac =  red.vector.5/f.s.quo, maninterval = c(2025, 2030), maneval = 2030)
 
   
-  fstks = spict2FLStockR(sman, rel = T)
+  fstks = spict2FLStockR(sman, rel = F)
   names(fstks)=scenarios
-  
+  fstks[[1]]@refpts
   # make table
   fc.catch.ita=as.data.frame(fstks[[1]]@catch)
   fc.catch.ita=fc.catch.ita[fc.catch.ita$year>=2023,]
@@ -83,9 +83,12 @@
                         rec=NA,
                         rec_var=NA,
                         tot_b=tot_b,
-                        fbar=round(as.numeric(fc.har$data), digits=3),
+                        fbar_tot=round(as.numeric(fc.har$data), digits=3),
+                        fbar_ita_otb=NA,
+                        fbar_ita_tbb=NA,
                         catch_tot=round(as.numeric(fc.catch$data)),
-                        catch_ita_otb=round(as.numeric(fc.catch$data))*catch.prop)
+                        catch_ita_otb=round(as.numeric(fc.catch$data))*catch.prop,
+                        catch_ita_tbb=NA)
     
     if(j>1){
       if(scen.res$catch_tot[8]>fc.catch.tot[8]){
@@ -99,7 +102,21 @@
     scen.res$catch_ita_otb=round(scen.res$catch_ita_otb)
     stf_results=rbind(stf_results, scen.res)
   }
-  
+  stf_results$fbar_ita_otb=round(stf_results$fbar_tot-fbar_sq_oth, digits=3)
+  #
+  ref.yr.tab=data.frame(stock=x.stock$stock,
+                        scenario='reference_year', year=2022, 
+                        rec=NA,
+                        rec_var=NA,
+                        tot_b=B.ts[B.ts$scenario==scenarios[j]&B.ts$year%in% 2022,]$tot_b,
+                        fbar_tot=round(f.s.quo, digits=3),
+                        fbar_ita_otb=round(fbar_sq_ita,digits=3),
+                        fbar_ita_tbb=NA,
+                        catch_tot=as.numeric(catch(stk))[length(catch(stk))],
+                        catch_ita_otb=as.numeric(catch(stk))[length(catch(stk))]*catch.prop,
+                        catch_ita_tbb=NA)
+  stf_results=rbind(ref.yr.tab, stf_results)
+  #stf_results$catch_ita_tbb=NA
   #
   stk2=stk
   stf.store=fstks

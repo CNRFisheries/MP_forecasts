@@ -22,12 +22,12 @@ rec.devs=function(stk){
 }
 
 get.timeseries=function(forecast.data, stock,scenario.vec){
-  target.years=2023:2030
+  target.years=2022:2030
   
   forecast.df=NULL
   
-  for(i in 1:length(scenario.vec)){
-    x.forecast=forecast.data[[i]]
+  for(ii in 1:length(scenario.vec)){
+    x.forecast=forecast.data[[ii]]
     fleet.def=data.frame(id=x.forecast$fleet_ID,
                          fleet_name=x.forecast$FleetNames)
     fleet.sel=fleet.def[fleet.def$fleet_name %in% fleet.selection,]
@@ -42,8 +42,19 @@ get.timeseries=function(forecast.data, stock,scenario.vec){
     catch.df=ts.df[,grep( 'dead',names(ts.df))]
     catch.df=catch.df[,grep( 'B',names(catch.df))]
     c.ts.all=as.numeric(apply(catch.df,1,sum))
+    
+    if(length(grep('TBB', fleet.sel$fleet_name))>0){
+    catch.df.ita=catch.df[,fleet.sel[fleet.sel$fleet_name=='OTB_ITA',]$id]
+    c.ts.ita=as.numeric(apply(catch.df.ita,1,sum))  
+    c.ts.ita.tbb=catch.df[,fleet.sel[fleet.sel$fleet_name=='TBB_ITA',]$id]
+    c.ts.ita.tbb=round(as.numeric(apply(c.ts.ita.tbb,1,sum))  )
+    }else{
     catch.df.ita=catch.df[,fleet.sel$id]
-    c.ts.ita=as.numeric(apply(catch.df.ita,1,sum))
+    c.ts.ita=as.numeric(apply(catch.df.ita,1,sum))  
+    c.ts.ita.tbb=NA
+    }
+    
+
     
     ssb.ts=ts.df[,'SpawnBio']
     rec.ts=ts.df[,'Recruit_0']
@@ -52,18 +63,52 @@ get.timeseries=function(forecast.data, stock,scenario.vec){
     f.df=na.omit(f.df)
     f.df=f.df[f.df$Yr%in%target.years,]
     f.ts=f.df$annual_F
+    f.apic.tot=as.numeric(apply(f.df[,7:ncol(f.df)],1,sum))
+    ratio.apic=f.ts/f.apic.tot
     
-    i.res=data.frame(stock=stock,
-                     scenario=scenarios[i],
-                     year=2023:2030,
-                     rec=round(rec.ts$Recruit_0),
-                     rec_var=NA,
-                     ssb=round(ssb.ts$SpawnBio),
-                     fbar=round(f.ts, digits=3),
-                     catch_tot=round(c.ts.all),
-                     catch_ita_otb=round(c.ts.ita))
+    if(length(grep('TBB', fleet.sel$fleet_name))>0){
+      f.ita=f.df[,'OTB_ITA']  
+      f.ita=f.ita
+      f.ita.tbb=f.df[,'TBB_ITA']  
+      f.ita.tbb=round(f.ita.tbb, digits=3)
+      i.res=data.frame(stock=stock,
+                       scenario=scenarios[ii],
+                       year=2022:2030,
+                       rec=round(rec.ts$Recruit_0),
+                       rec_var=NA,
+                       ssb=round(ssb.ts$SpawnBio),
+                       fbar_tot=round(f.ts, digits=3),
+                       fbar_ita_otb=round(f.ita, digits=3),
+                       fbar_ita_tbb=f.ita.tbb,
+                       ratio_apic=ratio.apic,
+                       catch_tot=round(c.ts.all),
+                       catch_ita_otb=round(c.ts.ita),
+                       catch_ita_tbb=c.ts.ita.tbb)
+      
+      forecast.df=rbind(forecast.df, i.res)
+    }else{
+      f.ita=f.df[,fleet.sel$fleet_name]
+      f.ita=as.numeric(apply(f.ita, 1, sum))
+      f.ita.tbb=NA
+      i.res=data.frame(stock=stock,
+                       scenario=scenarios[ii],
+                       year=2022:2030,
+                       rec=round(rec.ts$Recruit_0),
+                       rec_var=NA,
+                       ssb=round(ssb.ts$SpawnBio),
+                       fbar_tot=round(f.ts, digits=3),
+                       fapic_ita_otb=round(f.ita, digits=3),
+                       fapic_ita_tbb=f.ita.tbb,
+                       ratio_apic=ratio.apic,
+                       catch_tot=round(c.ts.all),
+                       catch_ita_otb=round(c.ts.ita),
+                       catch_ita_tbb=c.ts.ita.tbb)
+      
+      forecast.df=rbind(forecast.df, i.res)
+    }
+
     
-    forecast.df=rbind(forecast.df, i.res)
+
   }
   return(forecast.df)
 }

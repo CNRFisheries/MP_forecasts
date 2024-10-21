@@ -1,7 +1,9 @@
 ## this set of functions creates and applies forecasts scenarios on stock objects. Please be aware that some uantities and values needed to use this script are loaded within the main workflow script.
 ## This script is based on the FLR functions used in STECF ewg and publicly available through the ewg Annexes.
+  
 
 
+  
   # check stk and define some basic quantities
   max_yr_stk <- range(stk)["maxyear"]
   min_yr_stk <- range(stk)["minyear"]
@@ -114,7 +116,9 @@
                         rec=round(as.numeric(rec(stk_stf_fwd)[,as.character(stf_years)])),
                         rec_var=round(rec.cv, digits=2),
                         ssb=round(as.numeric(ssb(stk_stf_fwd)[,as.character(stf_years)])),
-                        fbar=round(as.numeric(fbar(stk_stf_fwd)[,as.character(stf_years)]), digits=3),
+                        fbar_tot=round(as.numeric(fbar(stk_stf_fwd)[,as.character(stf_years)]), digits=3),
+                        fbar_ita_otb=NA,
+                        fbar_ita_tbb=NA,
                         catch_tot=round(as.numeric(catch(stk_stf_fwd)[,as.character(stf_years)])))
     stf_results=rbind(stf_results, scen.res)
   
@@ -135,6 +139,19 @@
      }
 
   }
+  stf_results$fbar_ita_otb=round(stf_results$fbar_tot-fbar_sq_oth, digits=3)
   stf_results$catch_ita_otb=round(stf_results$catch_ita_otb)
   names(stf.store)=scenarios
   names(stf.stoch.store)=scenarios
+  ref.yr.tab=data.frame(stock=x.stock$stock,
+                        scenario='reference_year', year=2022, 
+                        rec=as.numeric(rec(stk))[length(rec(stk))],
+                        rec_var=NA,
+                        ssb=as.numeric(ssb(stk))[length(ssb(stk))],
+                        fbar_tot=as.numeric(fbar(stk))[length(fbar(stk))],
+                        fbar_ita_otb=fbar_sq_ita,
+                        fbar_ita_tbb=NA,
+                        catch_tot=as.numeric(catch(stk))[length(catch(stk))],
+                        catch_ita_otb=as.numeric(catch(stk))[length(catch(stk))]*catch.prop)
+  stf_results=rbind(ref.yr.tab, stf_results)
+  stf_results$catch_ita_tbb=NA

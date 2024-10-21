@@ -80,34 +80,56 @@ if(stock=='SOL_17'){
   
   ## tables
   ts.tab=plyr::ldply(ts.store)
+  #median(ts.tab$ratio_apic)
+  #plot(ts.tab[ts.tab$year%in%2022:2024,]$fbar_tot)
   cat.tot=aggregate(catch_tot~year+scenario,ts.tab,median) 
   cat.ita=aggregate(catch_ita_otb~year+scenario,ts.tab,median) 
+  cat.ita.tbb=aggregate(catch_ita_tbb~year+scenario,ts.tab,median) 
   
-  stf_tab=kbproj.fr[kbproj.fr$year%in%2023:2030, ]
+  f.tot=aggregate(fbar_tot~year+scenario,ts.tab,median)$fbar_tot
+  f.ita.prop=aggregate(fbar_ita_otb~year+scenario,ts.tab,median)
+  f.ita.tbb.prop=aggregate(fbar_ita_tbb~year+scenario,ts.tab,median)
+  
+  
+  stf_tab=kbproj.fr[kbproj.fr$year%in%2022:2030, ]
   stf_tab$scenario=NA
   stf_tab[stf_tab$run=="fmsy.transition",]$scenario='Fmsy transition'
   stf_tab[stf_tab$run=="r3",]$scenario="Annual 3%" 
   stf_tab[stf_tab$run=="r5",]$scenario="Annual 5%" 
   stf_tab[stf_tab$run=="s.quo",]$scenario="Status quo"
   
-  prj_F_Ftrg = aggregate(harvest~year+scenario,stf_tab,median) 
+  #prj_F_Ftrg = aggregate(harvest~year+scenario,stf_tab,median) 
   prj_SSB = aggregate(SSB~year+scenario,stf_tab,median) 
   prj_F = aggregate(F~year+scenario,stf_tab,median)
   prj_F$F=round(prj_F$F, digits=3)
   prj_Recr = aggregate(Recr~year+scenario,stf_tab,median)
   prj_Catch = aggregate(Catch~year+scenario,stf_tab,median) 
   
-  i.res=merge(merge(merge(merge(prj_Recr,cat.tot),prj_SSB),prj_F),cat.ita)
-  names(i.res)=c('year','scenario','rec','catch_tot','ssb','fbar','catch_ita_otb')
+  i.res=merge(merge(merge(merge(merge(prj_Recr,cat.tot),prj_SSB),prj_F),cat.ita), cat.ita.tbb)
+  names(i.res)=c('year','scenario','rec','catch_tot','ssb','fbar_tot','catch_ita_otb', 'catch_ita_tbb')
   i.res$stock=stock
   i.res$rec.var=NA
-  i.res=i.res[,c('stock','scenario','year','rec','rec.var','ssb','fbar', 'catch_tot','catch_ita_otb')]
+  i.res=merge(i.res,f.ita.prop)
+  i.res=merge(i.res,f.ita.tbb.prop)
+  i.res$fapic_ita_tbb=i.res$fbar_ita_tbb
+  i.res$fapic_ita_otb=i.res$fbar_ita_otb
+  
+  i.res=i.res[,c('stock','scenario','year','rec','rec.var','ssb','fbar_tot','fapic_ita_otb','fapic_ita_tbb', 'catch_tot','catch_ita_otb','catch_ita_tbb')]
   i.res$rec=round(i.res$rec)
   i.res$ssb=round(i.res$ssb)
   i.res$catch_tot=round(i.res$catch_tot)
   i.res$catch_ita_otb=round(i.res$catch_ita_otb)
-  i.res$fbar=round(i.res$fbar, digits=3)
+  i.res$catch_ita_tbb=round(i.res$catch_ita_tbb)
+  i.res$fbar_tot=round(i.res$fbar_tot, digits=3)
+  i.res$fapic_ita_otb=round(i.res$fapic_ita_otb, digits=3)
+  i.res$fapic_ita_tbb=round(i.res$fapic_ita_tbb, digits=3)
   i.res=i.res%>%dplyr::arrange(scenario,year)
+  
+  ref.yr=i.res[i.res$year==2022,]
+  ref.yr=ref.yr[1,]
+  ref.yr$scenario='reference_year'
+  i.res=rbind(ref.yr ,i.res[i.res$year>2022,])
+  
   write.csv(i.res, paste0('results/forecasts/', x.stock$stock,'_summary.csv'), row.names = F)
   
 }
@@ -164,7 +186,13 @@ if(stock!='SOL_17'){
     
     ## extract timeseries
     stf_results=get.timeseries(forecast.data = fcs, stock=stock, scenario.vec =scenarios )
-  
+    names(stf_results)
+    ref.yr=stf_results[stf_results$year==2022,]
+    ref.yr=ref.yr[1,]
+    ref.yr$scenario='reference_year'
+    stf_results=rbind(ref.yr ,stf_results[stf_results$year>2022,])
+    stf_results=stf_results[,-which(colnames(stf_results)=='ratio_apic')]
+    
 }
 
 

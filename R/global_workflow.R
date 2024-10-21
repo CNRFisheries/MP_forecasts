@@ -32,6 +32,7 @@ catch.data=readr::read_csv("data/catch_share_FDI.csv")
 catch.data$stock=paste(catch.data$species, catch.data$area, sep='_')
 
 # apply functions
+xx.stock=3
 for(xx.stock in 1:nrow(stocks_info)){
 #for(xx.stock in 12:13){
   
@@ -86,7 +87,7 @@ for(xx.stock in 1:nrow(stocks_info)){
     x.files=list.files('data/spict_objs')
     x.files=x.files[grep(x.stock$stock, x.files)]
     stk.spict <- readRDS(paste0("data/spict_objs/",x.files))
-    stk=spict2FLStockR(stk.spict, rel = TRUE)
+    stk=spict2FLStockR(stk.spict, rel = F)
     
   }
   
@@ -150,6 +151,7 @@ for(xx.stock in 1:nrow(stocks_info)){
   }
 
   # saving
+  
   write.csv(stf_results, paste0('results/forecasts/', x.stock$stock,'_summary.csv'), row.names = F)
   saveRDS(stf.store, paste0('results/forecasts/', x.stock$stock,'_fwd.rds'))
   rm(stf_results)
